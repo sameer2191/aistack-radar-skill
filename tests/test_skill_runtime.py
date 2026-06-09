@@ -74,6 +74,10 @@ class SkillRuntimeTests(unittest.TestCase):
             module.expand_queries("LangGraph vs OpenAI Agents SDK vs CrewAI"),
             ("LangGraph", "OpenAI Agents SDK", "CrewAI"),
         )
+        self.assertEqual(
+            module.expand_queries("Compare LangGraph, OpenAI Agents SDK, and CrewAI for production agent orchestration in 2026."),
+            ("LangGraph", "OpenAI Agents SDK", "CrewAI"),
+        )
 
     def test_skill_runtime_package_aliases(self):
         module = load_skill_runtime()

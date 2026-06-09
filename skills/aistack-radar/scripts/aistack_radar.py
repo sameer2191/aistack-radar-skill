@@ -31,7 +31,15 @@ from typing import Any, Callable
 
 VERSION = "0.1.0"
 DEFAULT_LIVE_SOURCES = ("github", "hackernews", "pypi")
-COMPARISON_SPLIT_RE = re.compile(r"\s+(?:vs\.?|versus|against)\s+|,\s*|\s+\|\s+", re.IGNORECASE)
+COMPARISON_SPLIT_RE = re.compile(r"\s+(?:vs\.?|versus|against)\s+|,\s*(?:and\s+)?|\s+\|\s+|\s+and\s+(?=[A-Z0-9])", re.IGNORECASE)
+QUESTION_PREFIX_RE = re.compile(
+    r"^(?:compare|evaluate|assess|benchmark|research|analyze|choose\s+between|pick\s+between)\s+",
+    re.IGNORECASE,
+)
+CONTEXT_SUFFIX_RE = re.compile(
+    r"\s+(?:for|when|where|in)\s+(?:production|enterprise|technical|agent|ai|llm|rag|developer|data|202\d|the\s+enterprise|real-world)\b.*$",
+    re.IGNORECASE,
+)
 PYTHON_PACKAGE_ALIASES = {
     "langgraph": "langgraph",
     "openai agents sdk": "openai-agents",
@@ -46,6 +54,25 @@ GITHUB_REPO_ALIASES = {
     "openai agents": "openai/openai-agents-python",
     "crewai": "crewAIInc/crewAI",
 }
+
+
+def comparison_subject(topic: str) -> str:
+    subject = QUESTION_PREFIX_RE.sub("", topic).strip()
+    if subject.lower().startswith("between "):
+        subject = subject[len("between ") :].strip()
+    context_match = re.search(r"\s+for\s+", subject, flags=re.IGNORECASE)
+    if context_match:
+        prefix = subject[: context_match.start()]
+        if len(COMPARISON_SPLIT_RE.split(prefix)) > 1:
+            subject = prefix.strip()
+    return subject
+
+
+def clean_entity(entity: str) -> str:
+    cleaned = entity.strip(" \"'.:;")
+    cleaned = re.sub(r"^(?:and|or)\s+", "", cleaned, flags=re.IGNORECASE).strip(" \"'.:;")
+    cleaned = CONTEXT_SUFFIX_RE.sub("", cleaned).strip(" \"'.:;")
+    return cleaned
 
 
 class SourceKind(str, Enum):
@@ -192,7 +219,12 @@ def expand_queries(topic: str) -> tuple[str, ...]:
     normalized = " ".join(topic.strip().split())
     if not normalized:
         raise ValueError("topic must not be empty")
-    entities = tuple(part.strip(" \"'") for part in COMPARISON_SPLIT_RE.split(normalized) if part.strip(" \"'"))
+    subject = comparison_subject(normalized)
+    entities = tuple(
+        entity
+        for entity in (clean_entity(part) for part in COMPARISON_SPLIT_RE.split(subject))
+        if entity
+    )
     if len(entities) > 1:
         return entities
     return (normalized,)
