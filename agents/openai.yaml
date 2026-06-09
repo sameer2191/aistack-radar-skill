@@ -1,0 +1,20 @@
+name: aistack-radar
+title: AI Stack Radar
+description: Researches AI, data, and developer-tool stacks and produces sourced adoption briefs with artifact-backed recommendations.
+version: 0.1.0
+skills:
+  - name: aistack-radar
+    path: ../skills/aistack-radar
+    description: Compare stack options, collect adoption signals, and summarize evidence for technical decision making.
+tags:
+  - ai
+  - data
+  - developer-tools
+  - research
+  - adoption
+capabilities:
+  - stack comparison
+  - adoption signal synthesis
+  - artifact citation
+  - fixture-backed demos
+  - live collection guidance

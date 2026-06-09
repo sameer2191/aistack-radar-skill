@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aistack-radar"
+version = "0.1.0"
+description = "Agent-skill research engine for AI stack adoption briefs"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Sameeruddin Mir" }]
+keywords = ["ai", "llmops", "agent-skills", "research", "developer-tools"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Topic :: Software Development :: Quality Assurance",
+]
+
+[project.scripts]
+aistack-radar = "aistack_radar.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+

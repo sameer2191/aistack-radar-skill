@@ -1,0 +1,10 @@
+{
+  "name": "aistack-radar",
+  "description": "Agent skill and local research engine for AI, data, and developer-tool adoption briefs.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Sameeruddin Mir"
+  },
+  "repository": "https://github.com/sameer2191/aistack-radar-skill",
+  "license": "MIT"
+}
