@@ -118,17 +118,21 @@ python3 skills/aistack-radar/scripts/aistack_radar.py research \
 
 Live collection is best effort. Public endpoints can rate-limit, change shape,
 or return thin evidence. Source warnings are preserved in generated briefs.
+When Python HTTPS fails because of a broken local certificate store, the runtime
+retries through system `curl` before marking the source unavailable.
 
 ## How It Works
 
 1. The topic is normalized into a research query.
-2. Fixture and live source connectors return normalized evidence records.
-3. Evidence is scored with transparent heuristics: source weight, authority,
+2. Comparison topics fan out per entity so sources search `LangGraph`,
+   `OpenAI Agents SDK`, and `CrewAI` separately instead of one broad string.
+3. Fixture and live source connectors return normalized evidence records.
+4. Evidence is scored with transparent heuristics: source weight, authority,
    recency, engagement, sentiment, source diversity, positive operational tags,
    and risk penalties.
-4. The synthesizer derives `ADOPT`, `TRIAL`, `WATCH`, or `AVOID` from top
+5. The synthesizer derives `ADOPT`, `TRIAL`, `WATCH`, or `AVOID` from top
    evidence, risk flags, and evidence volume.
-5. The report writer emits durable JSON, Markdown, and optional HTML artifacts.
+6. The report writer emits durable JSON, Markdown, and optional HTML artifacts.
 
 See [docs/methodology.md](docs/methodology.md) for scoring details and
 [docs/how-it-works.md](docs/how-it-works.md) for the runtime flow.
@@ -150,8 +154,9 @@ brief as a review artifact that points to source material.
 | Setting | Default | Purpose |
 | --- | --- | --- |
 | `AISTACK_RADAR_TIMEOUT_SECONDS` | `8` | Per-source live HTTP timeout |
+| `AISTACK_RADAR_USER_AGENT` | `aistack-radar-skill/0.1` | User-Agent for package live connectors |
 | `--fixture` | unset | Load normalized evidence JSON |
-| `--source` | default live set when no fixture is provided | Repeatable source selector |
+| `--source` | `github`, `hackernews`, `pypi` when no fixture is provided | Repeatable source selector |
 | `--output` | `runs/aistack-radar` | Artifact directory |
 | `--emit` | `md` | Use `html` for Markdown plus self-contained HTML |
 

@@ -38,7 +38,7 @@ class CliTests(unittest.TestCase):
             with patch("aistack_radar.cli.collect_sources", return_value=(SourceRun(source=SourceKind.GITHUB),)) as mocked:
                 code = main(["research", "LangGraph", "--output", tmp])
             self.assertEqual(code, 0)
-            self.assertEqual(mocked.call_args.kwargs["sources"], ("github", "hackernews", "reddit", "arxiv"))
+            self.assertEqual(mocked.call_args.kwargs["sources"], ("github", "hackernews", "pypi"))
 
 
 if __name__ == "__main__":

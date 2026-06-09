@@ -11,7 +11,57 @@ from time import perf_counter
 from typing import Any, Callable
 
 from ..models import EvidenceItem, SourceKind, SourceRun
-from .http import FetchError, fetch_json, urlencode
+from .http import FetchError, fetch_json, fetch_text, urlencode
+
+
+PYTHON_PACKAGE_ALIASES = {
+    "langgraph": "langgraph",
+    "openai agents sdk": "openai-agents",
+    "openai agent sdk": "openai-agents",
+    "openai agents": "openai-agents",
+    "crewai": "crewai",
+}
+GITHUB_REPO_ALIASES = {
+    "langgraph": "langchain-ai/langgraph",
+    "openai agents sdk": "openai/openai-agents-python",
+    "openai agent sdk": "openai/openai-agents-python",
+    "openai agents": "openai/openai-agents-python",
+    "crewai": "crewAIInc/crewAI",
+}
+
+
+def package_name(topic: str) -> str:
+    normalized = " ".join(topic.lower().strip().split())
+    if normalized in PYTHON_PACKAGE_ALIASES:
+        return PYTHON_PACKAGE_ALIASES[normalized]
+    if "openai" in normalized and "agent" in normalized:
+        return "openai-agents"
+    return topic.strip().split()[0].strip(",;").lower()
+
+
+def github_repo_alias(topic: str) -> str | None:
+    normalized = " ".join(topic.lower().strip().split())
+    if normalized in GITHUB_REPO_ALIASES:
+        return GITHUB_REPO_ALIASES[normalized]
+    if "openai" in normalized and "agent" in normalized:
+        return "openai/openai-agents-python"
+    return None
+
+
+def github_item(repo: dict[str, Any]) -> EvidenceItem:
+    stars = float(repo.get("stargazers_count", 0) or 0)
+    return EvidenceItem(
+        source=SourceKind.GITHUB,
+        title=str(repo.get("full_name", "GitHub repository")),
+        url=str(repo.get("html_url", "")),
+        summary=str(repo.get("description") or "No repository description."),
+        published_at=str(repo.get("pushed_at", "")),
+        engagement=stars,
+        authority=min(1.0, 0.35 + stars / 50000),
+        sentiment=0.2,
+        tags=("github", "repository"),
+        metadata={"stars": stars, "open_issues": repo.get("open_issues_count", 0)},
+    )
 
 
 def _run(kind: SourceKind, fetcher: Callable[[], tuple[EvidenceItem, ...]]) -> SourceRun:
@@ -27,27 +77,17 @@ def _run(kind: SourceKind, fetcher: Callable[[], tuple[EvidenceItem, ...]]) -> S
 
 def github(topic: str, timeout: float = 8.0, limit: int = 8) -> SourceRun:
     def fetch() -> tuple[EvidenceItem, ...]:
-        query = urlencode({"q": topic, "sort": "updated", "order": "desc", "per_page": limit})
-        payload = fetch_json(f"https://api.github.com/search/repositories?{query}", timeout)
         items = []
+        alias = github_repo_alias(topic)
+        if alias:
+            items.append(github_item(fetch_json(f"https://api.github.com/repos/{alias}", timeout)))
+        query = urlencode({"q": f"{topic} in:name,description", "sort": "stars", "order": "desc", "per_page": limit})
+        payload = fetch_json(f"https://api.github.com/search/repositories?{query}", timeout)
         for repo in payload.get("items", [])[:limit]:
-            stars = float(repo.get("stargazers_count", 0) or 0)
-            pushed_at = str(repo.get("pushed_at", ""))
-            items.append(
-                EvidenceItem(
-                    source=SourceKind.GITHUB,
-                    title=str(repo.get("full_name", "GitHub repository")),
-                    url=str(repo.get("html_url", "")),
-                    summary=str(repo.get("description") or "No repository description."),
-                    published_at=pushed_at,
-                    engagement=stars,
-                    authority=min(1.0, 0.35 + stars / 50000),
-                    sentiment=0.2,
-                    tags=("github", "repository"),
-                    metadata={"stars": stars, "open_issues": repo.get("open_issues_count", 0)},
-                )
-            )
-        return tuple(items)
+            item = github_item(repo)
+            if item.url not in {existing.url for existing in items}:
+                items.append(item)
+        return tuple(items[:limit])
 
     return _run(SourceKind.GITHUB, fetch)
 
@@ -109,7 +149,7 @@ def reddit(topic: str, timeout: float = 8.0, limit: int = 8) -> SourceRun:
 
 
 def pypi(topic: str, timeout: float = 8.0) -> SourceRun:
-    package = topic.strip().split()[0].strip(",;")
+    package = package_name(topic)
 
     def fetch() -> tuple[EvidenceItem, ...]:
         payload = fetch_json(f"https://pypi.org/pypi/{package}/json", timeout)
@@ -137,7 +177,7 @@ def pypi(topic: str, timeout: float = 8.0) -> SourceRun:
 
 
 def npm(topic: str, timeout: float = 8.0) -> SourceRun:
-    package = topic.strip().split()[0].strip(",;")
+    package = package_name(topic)
 
     def fetch() -> tuple[EvidenceItem, ...]:
         payload = fetch_json(f"https://registry.npmjs.org/{package}", timeout)
@@ -166,12 +206,10 @@ def arxiv(topic: str, timeout: float = 8.0, limit: int = 5) -> SourceRun:
     def fetch() -> tuple[EvidenceItem, ...]:
         # Atom parsing via stdlib keeps this dependency-free.
         import urllib.parse
-        import urllib.request
         import xml.etree.ElementTree as ET
 
         query = urllib.parse.urlencode({"search_query": f"all:{topic}", "start": 0, "max_results": limit, "sortBy": "submittedDate", "sortOrder": "descending"})
-        with urllib.request.urlopen(f"https://export.arxiv.org/api/query?{query}", timeout=timeout) as response:
-            xml = response.read()
+        xml = fetch_text(f"https://export.arxiv.org/api/query?{query}", timeout=timeout, accept="application/atom+xml")
         root = ET.fromstring(xml)
         ns = {"a": "http://www.w3.org/2005/Atom"}
         items = []
@@ -196,4 +234,3 @@ def arxiv(topic: str, timeout: float = 8.0, limit: int = 5) -> SourceRun:
         return tuple(items)
 
     return _run(SourceKind.ARXIV, fetch)
-

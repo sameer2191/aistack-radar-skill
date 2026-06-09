@@ -7,12 +7,11 @@ import json
 from pathlib import Path
 
 from .connectors import collect_sources
-from .planner import plan_topic, source_query
 from .reporting import write_reports
 from .synthesis import build_brief
 
 
-DEFAULT_LIVE_SOURCES = ("github", "hackernews", "reddit", "arxiv")
+DEFAULT_LIVE_SOURCES = ("github", "hackernews", "pypi")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -22,7 +21,7 @@ def build_parser() -> argparse.ArgumentParser:
     research = sub.add_parser("research", help="Collect evidence and write an adoption brief.")
     research.add_argument("topic", help="Tool, package, trend, or comparison topic.")
     research.add_argument("--fixture", help="Path to normalized evidence fixture JSON.")
-    research.add_argument("--source", action="append", default=[], help="Optional live source: github, hackernews, reddit, pypi, npm, arxiv. Defaults to github, hackernews, reddit, and arxiv when no fixture is provided.")
+    research.add_argument("--source", action="append", default=[], help="Optional live source: github, hackernews, reddit, pypi, npm, arxiv. Defaults to github, hackernews, and pypi when no fixture is provided.")
     research.add_argument("--output", default="runs/aistack-radar", help="Output directory for report artifacts.")
     research.add_argument("--emit", choices=["md", "html"], default="md", help="Emit Markdown only or Markdown plus HTML.")
     research.add_argument("--timeout", type=float, default=None, help="Per-source live HTTP timeout in seconds.")
@@ -32,10 +31,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def run_research(args: argparse.Namespace) -> int:
-    plan = plan_topic(args.topic)
-    query = source_query(plan)
     sources = tuple(args.source) or (() if args.fixture else DEFAULT_LIVE_SOURCES)
-    runs = collect_sources(query, fixture=args.fixture, sources=sources, timeout=args.timeout)
+    runs = collect_sources(args.topic, fixture=args.fixture, sources=sources, timeout=args.timeout)
     brief = build_brief(args.topic, runs)
     artifacts = write_reports(brief, args.output, emit_html=args.emit == "html")
 

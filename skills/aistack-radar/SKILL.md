@@ -41,10 +41,11 @@ Do not use this skill for general opinion pieces, unsourced trend summaries, or 
 2. Decide whether to use fixtures or live collection:
    - Use fixtures for demos, tests, reproducible examples, offline runs, or when the user explicitly provides a fixture.
    - Use live collection when the user needs current market signals, recent releases, adoption movement, or source-backed recommendations.
-3. Run the installed skill runtime to collect and synthesize the brief.
-4. Inspect the generated artifacts before answering.
-5. Cite artifact paths and source evidence. Avoid unsourced claims.
-6. Present the decision-ready brief with clear caveats, confidence, and recommended next steps.
+3. For comparison topics, let the runtime fan out per entity and merge duplicate URLs.
+4. Run the installed skill runtime to collect and synthesize the brief.
+5. Inspect the generated artifacts before answering.
+6. Cite artifact paths and source evidence. Avoid unsourced claims.
+7. Present the decision-ready brief with clear caveats, confidence, and recommended next steps.
 
 ## Commands
 
@@ -113,6 +114,7 @@ Use live collection when:
 - The brief will inform a real technical decision.
 
 Fixture-backed results must be labeled as fixture-backed and should not be presented as current market research.
+When no fixture and no `--source` flags are supplied, live mode defaults to GitHub, Hacker News, and PyPI.
 
 ## Direct Repository Development
 

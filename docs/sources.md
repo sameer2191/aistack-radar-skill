@@ -26,8 +26,14 @@ python3 "$SKILL_DIR/scripts/aistack_radar.py" research "LangGraph vs OpenAI Agen
 
 ## Live Sources
 
-Live connectors use Python standard-library HTTP calls and degrade to warnings
-instead of failing the run.
+Live connectors use Python standard-library HTTP calls first. If Python HTTPS
+fails because the local certificate store is broken, the runtime retries with
+system `curl`, which usually uses the operating system trust store. If both
+paths fail, the source degrades to a warning instead of failing the run.
+
+Comparison topics are split per entity before collection. A query such as
+`LangGraph vs OpenAI Agents SDK vs CrewAI` runs each selected live source for
+`LangGraph`, `OpenAI Agents SDK`, and `CrewAI`, then merges duplicate URLs.
 
 | Source | Endpoint | Notes |
 | --- | --- | --- |
@@ -48,3 +54,11 @@ python3 -m aistack_radar research "LangGraph" \
 
 Reports include source warnings so readers can see when a live source was thin,
 rate-limited, or unavailable.
+
+## SSL Certificate Troubleshooting
+
+If a live run returns warnings such as `certificate verify failed`, update to a
+version that includes the `curl` fallback and reinstall the skill copy. The
+runtime should then retry through `curl` automatically. If both Python HTTPS and
+`curl` fail, repair the local Python certificate bundle or run fixture mode
+until network access is healthy.

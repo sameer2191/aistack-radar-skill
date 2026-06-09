@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- Added system `curl` fallback for live HTTP requests when Python HTTPS
+  certificate verification fails.
+- Added regression coverage for package and installed skill runtime HTTP
+  fallback behavior.
+- Added comparison-topic fanout so live sources search each compared entity
+  separately before merging evidence.
+- Changed default live sources to GitHub, Hacker News, and PyPI for stronger
+  technical stack adoption signal.
+
 ## 0.1.0 - 2026-06-09
 
 Initial public release.

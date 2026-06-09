@@ -13,6 +13,9 @@ import html
 import json
 import math
 import os
+import re
+import shutil
+import subprocess
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -27,7 +30,22 @@ from typing import Any, Callable
 
 
 VERSION = "0.1.0"
-DEFAULT_LIVE_SOURCES = ("github", "hackernews", "reddit", "arxiv")
+DEFAULT_LIVE_SOURCES = ("github", "hackernews", "pypi")
+COMPARISON_SPLIT_RE = re.compile(r"\s+(?:vs\.?|versus|against)\s+|,\s*|\s+\|\s+", re.IGNORECASE)
+PYTHON_PACKAGE_ALIASES = {
+    "langgraph": "langgraph",
+    "openai agents sdk": "openai-agents",
+    "openai agent sdk": "openai-agents",
+    "openai agents": "openai-agents",
+    "crewai": "crewai",
+}
+GITHUB_REPO_ALIASES = {
+    "langgraph": "langchain-ai/langgraph",
+    "openai agents sdk": "openai/openai-agents-python",
+    "openai agent sdk": "openai/openai-agents-python",
+    "openai agents": "openai/openai-agents-python",
+    "crewai": "crewAIInc/crewAI",
+}
 
 
 class SourceKind(str, Enum):
@@ -170,6 +188,50 @@ def source_kind(value: str) -> SourceKind:
         return SourceKind.WEB
 
 
+def expand_queries(topic: str) -> tuple[str, ...]:
+    normalized = " ".join(topic.strip().split())
+    if not normalized:
+        raise ValueError("topic must not be empty")
+    entities = tuple(part.strip(" \"'") for part in COMPARISON_SPLIT_RE.split(normalized) if part.strip(" \"'"))
+    if len(entities) > 1:
+        return entities
+    return (normalized,)
+
+
+def package_name(topic: str) -> str:
+    normalized = " ".join(topic.lower().strip().split())
+    if normalized in PYTHON_PACKAGE_ALIASES:
+        return PYTHON_PACKAGE_ALIASES[normalized]
+    if "openai" in normalized and "agent" in normalized:
+        return "openai-agents"
+    return topic.strip().split()[0].strip(",;").lower()
+
+
+def github_repo_alias(topic: str) -> str | None:
+    normalized = " ".join(topic.lower().strip().split())
+    if normalized in GITHUB_REPO_ALIASES:
+        return GITHUB_REPO_ALIASES[normalized]
+    if "openai" in normalized and "agent" in normalized:
+        return "openai/openai-agents-python"
+    return None
+
+
+def github_item(repo: dict[str, Any]) -> EvidenceItem:
+    stars = float(repo.get("stargazers_count", 0) or 0)
+    return EvidenceItem(
+        source=SourceKind.GITHUB,
+        title=str(repo.get("full_name", "GitHub repository")),
+        url=str(repo.get("html_url", "")),
+        summary=str(repo.get("description") or "No repository description."),
+        published_at=str(repo.get("pushed_at", "")),
+        engagement=stars,
+        authority=min(1.0, 0.35 + stars / 50000),
+        sentiment=0.2,
+        tags=("github", "repository"),
+        metadata={"stars": stars, "open_issues": repo.get("open_issues_count", 0)},
+    )
+
+
 def load_fixture(path: str | Path) -> SourceRun:
     started = perf_counter()
     payload = json.loads(Path(path).read_text(encoding="utf-8"))
@@ -193,10 +255,53 @@ def load_fixture(path: str | Path) -> SourceRun:
     return SourceRun(source=SourceKind.FIXTURE, items=tuple(items), elapsed_ms=(perf_counter() - started) * 1000)
 
 
-def fetch_json(url: str, timeout: float) -> dict[str, Any]:
-    request = urllib.request.Request(url, headers={"User-Agent": f"aistack-radar/{VERSION}"})
+def user_agent() -> str:
+    return os.environ.get("AISTACK_RADAR_USER_AGENT", f"aistack-radar/{VERSION}")
+
+
+def fetch_text_urllib(url: str, timeout: float, accept: str) -> str:
+    request = urllib.request.Request(url, headers={"Accept": accept, "User-Agent": user_agent()})
     with urllib.request.urlopen(request, timeout=timeout) as response:
-        return json.loads(response.read().decode("utf-8"))
+        return response.read().decode("utf-8")
+
+
+def fetch_text_curl(url: str, timeout: float, accept: str) -> str:
+    curl = shutil.which("curl")
+    if not curl:
+        raise RuntimeError("urllib failed and curl is not available")
+    completed = subprocess.run(
+        [
+            curl,
+            "-fsSL",
+            "--max-time",
+            str(max(1.0, timeout)),
+            "-A",
+            user_agent(),
+            "-H",
+            f"Accept: {accept}",
+            url,
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        raise RuntimeError(completed.stderr.strip() or f"curl exited with status {completed.returncode}")
+    return completed.stdout
+
+
+def fetch_text(url: str, timeout: float, accept: str = "*/*") -> str:
+    try:
+        return fetch_text_urllib(url, timeout, accept)
+    except Exception as urllib_exc:  # pragma: no cover - network dependent
+        try:
+            return fetch_text_curl(url, timeout, accept)
+        except Exception as curl_exc:
+            raise RuntimeError(f"urllib failed: {urllib_exc}; curl failed: {curl_exc}") from curl_exc
+
+
+def fetch_json(url: str, timeout: float) -> dict[str, Any]:
+    return json.loads(fetch_text(url, timeout, accept="application/json"))
 
 
 def run_source(kind: SourceKind, fetcher: Callable[[], tuple[EvidenceItem, ...]]) -> SourceRun:
@@ -212,26 +317,17 @@ def run_source(kind: SourceKind, fetcher: Callable[[], tuple[EvidenceItem, ...]]
 
 def github(topic: str, timeout: float = 8.0, limit: int = 8) -> SourceRun:
     def fetch() -> tuple[EvidenceItem, ...]:
-        query = urllib.parse.urlencode({"q": topic, "sort": "updated", "order": "desc", "per_page": limit})
-        payload = fetch_json(f"https://api.github.com/search/repositories?{query}", timeout)
         items = []
+        alias = github_repo_alias(topic)
+        if alias:
+            items.append(github_item(fetch_json(f"https://api.github.com/repos/{alias}", timeout)))
+        query = urllib.parse.urlencode({"q": f"{topic} in:name,description", "sort": "stars", "order": "desc", "per_page": limit})
+        payload = fetch_json(f"https://api.github.com/search/repositories?{query}", timeout)
         for repo in payload.get("items", [])[:limit]:
-            stars = float(repo.get("stargazers_count", 0) or 0)
-            items.append(
-                EvidenceItem(
-                    source=SourceKind.GITHUB,
-                    title=str(repo.get("full_name", "GitHub repository")),
-                    url=str(repo.get("html_url", "")),
-                    summary=str(repo.get("description") or "No repository description."),
-                    published_at=str(repo.get("pushed_at", "")),
-                    engagement=stars,
-                    authority=min(1.0, 0.35 + stars / 50000),
-                    sentiment=0.2,
-                    tags=("github", "repository"),
-                    metadata={"stars": stars, "open_issues": repo.get("open_issues_count", 0)},
-                )
-            )
-        return tuple(items)
+            item = github_item(repo)
+            if item.url not in {existing.url for existing in items}:
+                items.append(item)
+        return tuple(items[:limit])
 
     return run_source(SourceKind.GITHUB, fetch)
 
@@ -290,7 +386,7 @@ def reddit(topic: str, timeout: float = 8.0, limit: int = 8) -> SourceRun:
 
 
 def pypi(topic: str, timeout: float = 8.0) -> SourceRun:
-    package = topic.strip().split()[0].strip(",;")
+    package = package_name(topic)
 
     def fetch() -> tuple[EvidenceItem, ...]:
         payload = fetch_json(f"https://pypi.org/pypi/{package}/json", timeout)
@@ -318,7 +414,7 @@ def pypi(topic: str, timeout: float = 8.0) -> SourceRun:
 
 
 def npm(topic: str, timeout: float = 8.0) -> SourceRun:
-    package = topic.strip().split()[0].strip(",;")
+    package = package_name(topic)
 
     def fetch() -> tuple[EvidenceItem, ...]:
         payload = fetch_json(f"https://registry.npmjs.org/{package}", timeout)
@@ -346,8 +442,7 @@ def npm(topic: str, timeout: float = 8.0) -> SourceRun:
 def arxiv(topic: str, timeout: float = 8.0, limit: int = 5) -> SourceRun:
     def fetch() -> tuple[EvidenceItem, ...]:
         query = urllib.parse.urlencode({"search_query": f"all:{topic}", "start": 0, "max_results": limit, "sortBy": "submittedDate", "sortOrder": "descending"})
-        with urllib.request.urlopen(f"https://export.arxiv.org/api/query?{query}", timeout=timeout) as response:
-            xml = response.read()
+        xml = fetch_text(f"https://export.arxiv.org/api/query?{query}", timeout=timeout, accept="application/atom+xml")
         root = ET.fromstring(xml)
         ns = {"a": "http://www.w3.org/2005/Atom"}
         items = []
@@ -386,12 +481,28 @@ def collect_sources(topic: str, *, fixture: str | Path | None = None, sources: t
     if fixture:
         runs.append(load_fixture(fixture))
     timeout = timeout if timeout is not None else float(os.environ.get("AISTACK_RADAR_TIMEOUT_SECONDS", "8"))
+    queries = expand_queries(topic)
     for source in sources:
         connector = LIVE_CONNECTORS.get(source)
         if connector is None:
             runs.append(SourceRun(source=SourceKind.WEB, warnings=(f"unknown source: {source}",)))
             continue
-        runs.append(connector(topic, timeout=timeout))
+        source_runs = tuple(connector(query, timeout=timeout) for query in queries)
+        seen: set[str] = set()
+        items: list[EvidenceItem] = []
+        warnings: list[str] = []
+        elapsed_ms = 0.0
+        source_kind_value = source_runs[0].source if source_runs else SourceKind.WEB
+        for source_run in source_runs:
+            elapsed_ms += source_run.elapsed_ms
+            warnings.extend(source_run.warnings)
+            for item in source_run.items:
+                key = item.url or f"{item.source.value}:{item.title}"
+                if key in seen:
+                    continue
+                seen.add(key)
+                items.append(item)
+        runs.append(SourceRun(source=source_kind_value, items=tuple(items), warnings=tuple(warnings), elapsed_ms=elapsed_ms))
     return tuple(runs)
 
 
@@ -559,7 +670,7 @@ def build_parser() -> argparse.ArgumentParser:
     research = sub.add_parser("research", help="Collect evidence and write an adoption brief.")
     research.add_argument("topic", help="Tool, package, trend, or comparison topic.")
     research.add_argument("--fixture", help="Path to normalized evidence fixture JSON.")
-    research.add_argument("--source", action="append", default=[], help="Optional live source: github, hackernews, reddit, pypi, npm, arxiv.")
+    research.add_argument("--source", action="append", default=[], help="Optional live source: github, hackernews, reddit, pypi, npm, arxiv. Defaults to github, hackernews, and pypi when no fixture is provided.")
     research.add_argument("--output", default="runs/aistack-radar", help="Output directory for report artifacts.")
     research.add_argument("--emit", choices=["md", "html"], default="md", help="Emit Markdown only or Markdown plus HTML.")
     research.add_argument("--timeout", type=float, default=None, help="Per-source live HTTP timeout in seconds.")

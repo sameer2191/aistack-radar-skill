@@ -9,7 +9,7 @@ source selection, timeout behavior, fixture use, and artifact output.
 | --- | --- | --- |
 | `topic` | required | Tool, package, trend, or comparison topic |
 | `--fixture PATH` | unset | Load normalized evidence from a local JSON fixture |
-| `--source NAME` | default live set when no fixture is provided | Repeatable source selector |
+| `--source NAME` | `github`, `hackernews`, `pypi` when no fixture is provided | Repeatable source selector |
 | `--output PATH` | `runs/aistack-radar` | Output directory for artifacts |
 | `--emit md|html` | `md` | `html` writes Markdown plus HTML |
 | `--timeout SECONDS` | env or `8` | Per-source live HTTP timeout |
@@ -25,13 +25,14 @@ Supported live sources:
 - `arxiv`
 
 When no fixture is provided and no `--source` flags are given, the runtime uses
-the conservative default set: `github`, `hackernews`, `reddit`, and `arxiv`.
+the conservative default set: `github`, `hackernews`, and `pypi`.
 
 ## Environment Variables
 
 | Variable | Default | Description |
 | --- | --- | --- |
 | `AISTACK_RADAR_TIMEOUT_SECONDS` | `8` | Per-source live HTTP timeout when `--timeout` is not passed |
+| `AISTACK_RADAR_USER_AGENT` | `aistack-radar-skill/0.1` | User-Agent sent by package live connectors |
 
 ## Fixture Mode
 
@@ -69,6 +70,14 @@ python3 -m aistack_radar research "LangGraph" \
 
 Warnings are written into `brief.json` and `brief.md` under source health and
 risk/caveat sections.
+
+Live HTTP requests use Python HTTPS first and retry with system `curl` when
+Python certificate verification fails. This protects macOS Python installs with
+missing local issuer certificates while keeping the core dependency-free.
+
+Comparison topics fan out per entity. For example,
+`LangGraph vs OpenAI Agents SDK vs CrewAI` runs live collectors for each entity
+and merges duplicate URLs before scoring.
 
 ## Artifacts
 
