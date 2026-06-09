@@ -43,9 +43,10 @@ Do not use this skill for general opinion pieces, unsourced trend summaries, or 
    - Use live collection when the user needs current market signals, recent releases, adoption movement, or source-backed recommendations.
 3. For comparison topics, let the runtime fan out per entity and merge duplicate URLs.
 4. Run the installed skill runtime to collect and synthesize the brief.
-5. Inspect the generated artifacts before answering.
-6. Cite artifact paths and source evidence. Avoid unsourced claims.
-7. Present the decision-ready brief with clear caveats, confidence, and recommended next steps.
+5. If the runtime exits non-zero or all live source runs return warnings with zero evidence, treat the live collection as failed. Do not present the `WATCH` artifact as a decision-ready recommendation. Retry the same command with network access enabled, or switch explicitly to a fixture-backed demo.
+6. Inspect the generated artifacts before answering.
+7. Cite artifact paths and source evidence. Avoid unsourced claims.
+8. Present the decision-ready brief with clear caveats, confidence, and recommended next steps.
 
 ## Commands
 
@@ -85,6 +86,7 @@ Do not claim that a tool is winning, declining, production-ready, deprecated, se
 - Start with the recommendation and confidence from `brief.json`.
 - Label fixture-backed runs as fixture-backed.
 - For live runs, mention source warnings when any source degrades or times out.
+- For live runs with zero evidence and source warnings, state that live collection failed and rerun with network access before giving a recommendation.
 - Cite `brief.md`, `brief.json`, and `brief.html` paths when they exist.
 - Use inline source names from the evidence table rather than adding unsupported claims.
 - If no evidence is collected, say that and suggest a fixture run or explicit live sources.

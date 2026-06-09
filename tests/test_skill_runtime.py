@@ -1,3 +1,5 @@
+import contextlib
+import io
 import json
 import importlib.util
 import subprocess
@@ -5,6 +7,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 
@@ -90,6 +93,18 @@ class SkillRuntimeTests(unittest.TestCase):
         self.assertEqual(module.github_repo_alias("LangGraph"), "langchain-ai/langgraph")
         self.assertEqual(module.github_repo_alias("OpenAI Agents SDK"), "openai/openai-agents-python")
         self.assertEqual(module.github_repo_alias("CrewAI"), "crewAIInc/crewAI")
+
+    def test_skill_runtime_live_collection_failure_returns_nonzero(self):
+        module = load_skill_runtime()
+        failed_run = module.SourceRun(source=module.SourceKind.GITHUB, warnings=("github unavailable: DNS lookup failed",))
+        with tempfile.TemporaryDirectory() as tmp:
+            args = SimpleNamespace(topic="LangGraph", fixture=None, source=[], output=tmp, emit="md", timeout=None, print_json=False)
+            with patch.object(module, "collect_sources", return_value=(failed_run,)):
+                with contextlib.redirect_stderr(io.StringIO()):
+                    code = module.run_research(args)
+
+            self.assertEqual(code, module.LIVE_COLLECTION_FAILED)
+            self.assertTrue((Path(tmp) / "brief.json").exists())
 
 
 if __name__ == "__main__":
