@@ -15,11 +15,16 @@ classifiers = [
   "Programming Language :: Python :: 3",
   "License :: OSI Approved :: MIT License",
   "Topic :: Software Development :: Quality Assurance",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
+
+[project.urls]
+Homepage = "https://github.com/sameer2191/aistack-radar-skill"
+Repository = "https://github.com/sameer2191/aistack-radar-skill"
+Issues = "https://github.com/sameer2191/aistack-radar-skill/issues"
 
 [project.scripts]
 aistack-radar = "aistack_radar.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-

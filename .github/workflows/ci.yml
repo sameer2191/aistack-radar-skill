@@ -19,4 +19,5 @@ jobs:
         run: python -m unittest discover -s tests
       - name: Run fixture demo
         run: python -m aistack_radar research "LangGraph vs OpenAI Agents SDK" --fixture fixtures/demo_signal.json --output runs/ci --emit html
-
+      - name: Run installed skill runtime fixture demo
+        run: python skills/aistack-radar/scripts/aistack_radar.py research "LangGraph vs OpenAI Agents SDK" --fixture skills/aistack-radar/fixtures/demo_signal.json --output runs/skill-ci --emit html

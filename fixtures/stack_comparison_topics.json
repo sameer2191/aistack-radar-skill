@@ -1,0 +1,22 @@
+[
+  {
+    "topic": "LangGraph vs OpenAI Agents SDK",
+    "intent": "agent framework comparison",
+    "recommended_sources": ["github", "hackernews", "pypi", "arxiv"]
+  },
+  {
+    "topic": "vector database options for agent memory",
+    "intent": "infrastructure shortlist",
+    "recommended_sources": ["github", "hackernews", "reddit", "arxiv"]
+  },
+  {
+    "topic": "LLM evaluation platforms for production applications",
+    "intent": "quality and observability review",
+    "recommended_sources": ["github", "hackernews", "pypi", "arxiv"]
+  },
+  {
+    "topic": "workflow orchestration for AI agents",
+    "intent": "architecture decision support",
+    "recommended_sources": ["github", "reddit", "hackernews", "arxiv"]
+  }
+]

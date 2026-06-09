@@ -8,8 +8,18 @@ Fixture mode is the default validation path. It reads normalized evidence from
 JSON and does not require network access or credentials:
 
 ```bash
-python -m aistack_radar research "LangGraph vs OpenAI Agents SDK" \
+python3 -m aistack_radar research "LangGraph vs OpenAI Agents SDK" \
   --fixture fixtures/demo_signal.json \
+  --output runs/demo \
+  --emit html
+```
+
+Installed skill fixture mode:
+
+```bash
+SKILL_DIR="${SKILL_DIR:-$HOME/.codex/skills/aistack-radar}"
+python3 "$SKILL_DIR/scripts/aistack_radar.py" research "LangGraph vs OpenAI Agents SDK" \
+  --fixture "$SKILL_DIR/fixtures/demo_signal.json" \
   --output runs/demo \
   --emit html
 ```
@@ -31,11 +41,10 @@ instead of failing the run.
 Use live sources explicitly:
 
 ```bash
-python -m aistack_radar research "LangGraph" \
+python3 -m aistack_radar research "LangGraph" \
   --source github --source hackernews --source pypi \
   --output runs/live
 ```
 
 Reports include source warnings so readers can see when a live source was thin,
 rate-limited, or unavailable.
-

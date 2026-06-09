@@ -1,0 +1,17 @@
+{
+  "name": "aistack-radar-skill",
+  "owner": {
+    "name": "Sameeruddin Mir",
+    "url": "https://github.com/sameer2191"
+  },
+  "plugins": [
+    {
+      "name": "aistack-radar",
+      "description": "Research AI, data, and developer-tool stacks and produce sourced adoption briefs.",
+      "version": "0.1.0",
+      "source": "./",
+      "category": "research",
+      "homepage": "https://github.com/sameer2191/aistack-radar-skill"
+    }
+  ]
+}

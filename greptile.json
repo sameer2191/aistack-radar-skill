@@ -1,0 +1,10 @@
+{
+  "exclude": [
+    "runs/**",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "dist/**",
+    "build/**"
+  ],
+  "instructions": "Prioritize the installed skill runtime, package CLI parity, deterministic fixture behavior, and source warning handling."
+}

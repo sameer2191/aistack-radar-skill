@@ -1,0 +1,24 @@
+{
+  "name": "aistack-radar-skill",
+  "owner": {
+    "name": "Sameeruddin Mir",
+    "url": "https://github.com/sameer2191"
+  },
+  "metadata": {
+    "description": "Marketplace metadata for the AI Stack Radar adoption-research skill."
+  },
+  "plugins": [
+    {
+      "name": "aistack-radar",
+      "description": "Research AI, data, and developer-tool stacks and produce sourced adoption briefs.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Sameeruddin Mir",
+        "url": "https://github.com/sameer2191"
+      },
+      "source": "./",
+      "category": "productivity",
+      "homepage": "https://github.com/sameer2191/aistack-radar-skill"
+    }
+  ]
+}

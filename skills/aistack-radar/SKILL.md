@@ -1,6 +1,32 @@
 ---
 name: aistack-radar
+version: "0.1.0"
 description: Research AI, data, and developer-tool stacks; compare adoption signals; and produce sourced adoption briefs for technical decision makers.
+argument-hint: 'aistack-radar LangGraph vs OpenAI Agents SDK | aistack-radar vector database options | aistack-radar eval platforms'
+allowed-tools: Bash, Read, Write, WebSearch
+homepage: https://github.com/sameer2191/aistack-radar-skill
+repository: https://github.com/sameer2191/aistack-radar-skill
+author: Sameeruddin Mir
+license: MIT
+user-invocable: true
+metadata:
+  tags:
+    - ai
+    - llmops
+    - agent-frameworks
+    - developer-tools
+    - data-platforms
+    - adoption-research
+    - technical-due-diligence
+  requires:
+    env: []
+    optionalEnv:
+      - AISTACK_RADAR_TIMEOUT_SECONDS
+    bins:
+      - python3
+    files:
+      - scripts/aistack_radar.py
+      - fixtures/demo_signal.json
 ---
 
 # AI Stack Radar
@@ -15,23 +41,27 @@ Do not use this skill for general opinion pieces, unsourced trend summaries, or 
 2. Decide whether to use fixtures or live collection:
    - Use fixtures for demos, tests, reproducible examples, offline runs, or when the user explicitly provides a fixture.
    - Use live collection when the user needs current market signals, recent releases, adoption movement, or source-backed recommendations.
-3. Run the CLI to collect and synthesize the brief.
+3. Run the installed skill runtime to collect and synthesize the brief.
 4. Inspect the generated artifacts before answering.
 5. Cite artifact paths and source evidence. Avoid unsourced claims.
 6. Present the decision-ready brief with clear caveats, confidence, and recommended next steps.
 
 ## Commands
 
+When this skill is installed, set `SKILL_DIR` to the directory that contains this `SKILL.md`.
+
 Default fixture-backed run:
 
 ```bash
-python -m aistack_radar research "LangGraph vs OpenAI Agents SDK" --fixture fixtures/demo_signal.json --output runs/demo --emit html
+SKILL_DIR="${SKILL_DIR:-$HOME/.codex/skills/aistack-radar}"
+python3 "$SKILL_DIR/scripts/aistack_radar.py" research "LangGraph vs OpenAI Agents SDK" --fixture "$SKILL_DIR/fixtures/demo_signal.json" --output runs/demo --emit html
 ```
 
 Suggested live run shape:
 
 ```bash
-python -m aistack_radar research "<research question>" --output runs/<slug> --emit html
+SKILL_DIR="${SKILL_DIR:-$HOME/.codex/skills/aistack-radar}"
+python3 "$SKILL_DIR/scripts/aistack_radar.py" research "<research question>" --output runs/<slug> --emit html
 ```
 
 If the CLI supports additional emit formats, prefer durable artifacts such as Markdown, JSON, and HTML so later agents can inspect the same evidence.
@@ -48,6 +78,15 @@ The agent response should include:
 - Explicit caveats where evidence is incomplete, stale, fixture-based, or inconclusive.
 
 Do not claim that a tool is winning, declining, production-ready, deprecated, secure, compliant, or broadly adopted unless the artifact evidence supports it.
+
+## Output Contract
+
+- Start with the recommendation and confidence from `brief.json`.
+- Label fixture-backed runs as fixture-backed.
+- For live runs, mention source warnings when any source degrades or times out.
+- Cite `brief.md`, `brief.json`, and `brief.html` paths when they exist.
+- Use inline source names from the evidence table rather than adding unsupported claims.
+- If no evidence is collected, say that and suggest a fixture run or explicit live sources.
 
 ## Artifact Citation
 
@@ -74,3 +113,14 @@ Use live collection when:
 - The brief will inform a real technical decision.
 
 Fixture-backed results must be labeled as fixture-backed and should not be presented as current market research.
+
+## Direct Repository Development
+
+From a full repository checkout, developers can also run the package CLI:
+
+```bash
+python3 -m aistack_radar research "LangGraph vs OpenAI Agents SDK" --fixture fixtures/demo_signal.json --output runs/demo --emit html
+python3 -m unittest discover -s tests
+```
+
+The installed skill runtime and the package CLI should produce the same artifact contract: `brief.json`, `brief.md`, and optionally `brief.html`.

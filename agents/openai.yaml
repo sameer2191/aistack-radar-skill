@@ -18,3 +18,4 @@ capabilities:
   - artifact citation
   - fixture-backed demos
   - live collection guidance
+  - self-contained installed runtime

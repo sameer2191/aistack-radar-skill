@@ -6,5 +6,19 @@
     "name": "Sameeruddin Mir"
   },
   "repository": "https://github.com/sameer2191/aistack-radar-skill",
-  "license": "MIT"
+  "homepage": "https://github.com/sameer2191/aistack-radar-skill",
+  "license": "MIT",
+  "keywords": [
+    "ai",
+    "llmops",
+    "agent-skills",
+    "developer-tools",
+    "technical-research",
+    "adoption",
+    "github",
+    "hacker-news",
+    "reddit",
+    "pypi",
+    "arxiv"
+  ]
 }

@@ -1,0 +1,106 @@
+{
+  "topic": "LangGraph vs OpenAI Agents SDK",
+  "items": [
+    {
+      "source": "github",
+      "title": "langchain-ai/langgraph shows active graph orchestration development",
+      "url": "https://github.com/langchain-ai/langgraph",
+      "summary": "LangGraph emphasizes explicit state graphs, durable execution patterns, checkpointing, and multi-agent workflows. Recent issue themes center on deployment ergonomics and graph state debugging.",
+      "published_at": "2026-06-01T10:00:00Z",
+      "engagement": 12400,
+      "authority": 0.86,
+      "sentiment": 0.38,
+      "tags": ["github", "orchestration", "langgraph", "agent-framework"],
+      "metadata": {"stars": 12400, "open_issues": 180}
+    },
+    {
+      "source": "github",
+      "title": "openai/openai-agents-python focuses on provider-native agent primitives",
+      "url": "https://github.com/openai/openai-agents-python",
+      "summary": "OpenAI Agents SDK positions handoffs, tools, tracing, guardrails, and model-provider integration as first-class primitives. Recent examples focus on production tracing and multi-agent handoffs.",
+      "published_at": "2026-06-03T15:00:00Z",
+      "engagement": 9800,
+      "authority": 0.91,
+      "sentiment": 0.44,
+      "tags": ["github", "openai", "agents-sdk", "tracing"],
+      "metadata": {"stars": 9800, "open_issues": 95}
+    },
+    {
+      "source": "hackernews",
+      "title": "Developers compare graph-based agents with provider-native SDKs",
+      "url": "https://hn.algolia.com/?q=LangGraph%20OpenAI%20Agents%20SDK",
+      "summary": "Discussion favors LangGraph when workflows need explicit state machines and independent model providers. OpenAI Agents SDK is viewed as simpler when teams already standardize on OpenAI APIs and tracing.",
+      "published_at": "2026-05-29T12:00:00Z",
+      "engagement": 615,
+      "authority": 0.72,
+      "sentiment": 0.12,
+      "tags": ["discussion", "developer-sentiment", "tradeoffs"]
+    },
+    {
+      "source": "reddit",
+      "title": "Agent builders report debugging pain around long-running workflows",
+      "url": "https://www.reddit.com/r/LocalLLaMA/comments/example",
+      "summary": "Practitioners praise explicit graph execution for debuggability but warn that state management and retries become complex. Provider-native SDKs are praised for fast starts and criticized for lock-in risk.",
+      "published_at": "2026-05-25T18:30:00Z",
+      "engagement": 870,
+      "authority": 0.58,
+      "sentiment": 0.05,
+      "tags": ["reddit", "developer-sentiment", "workflow-reliability"]
+    },
+    {
+      "source": "pypi",
+      "title": "langgraph package shows frequent releases",
+      "url": "https://pypi.org/project/langgraph/",
+      "summary": "Package release cadence indicates active maintenance. API churn risk remains relevant for production teams that need stable graph definitions.",
+      "published_at": "2026-06-04T08:00:00Z",
+      "engagement": 94,
+      "authority": 0.68,
+      "sentiment": 0.18,
+      "tags": ["package", "pypi", "release-cadence", "langgraph"]
+    },
+    {
+      "source": "pypi",
+      "title": "openai-agents package emphasizes trace and guardrail ergonomics",
+      "url": "https://pypi.org/project/openai-agents/",
+      "summary": "Package metadata and examples highlight tracing, guardrails, tools, and handoffs. The dependency surface is smaller than full graph-framework stacks.",
+      "published_at": "2026-06-02T08:00:00Z",
+      "engagement": 48,
+      "authority": 0.72,
+      "sentiment": 0.32,
+      "tags": ["package", "pypi", "agents-sdk", "guardrails"]
+    },
+    {
+      "source": "docs",
+      "title": "LangGraph docs emphasize checkpointing and explicit control flow",
+      "url": "https://langchain-ai.github.io/langgraph/",
+      "summary": "Documentation is strongest for teams that need human-in-the-loop checkpoints, resumable workflows, and graph-level control over state transitions.",
+      "published_at": "2026-05-30T08:00:00Z",
+      "engagement": 120,
+      "authority": 0.82,
+      "sentiment": 0.36,
+      "tags": ["docs", "checkpointing", "hitl", "langgraph"]
+    },
+    {
+      "source": "docs",
+      "title": "OpenAI Agents docs emphasize handoffs, guardrails, and tracing",
+      "url": "https://openai.github.io/openai-agents-python/",
+      "summary": "Documentation is strongest for teams that want direct provider integration, built-in tracing, and guardrail primitives with less orchestration boilerplate.",
+      "published_at": "2026-06-01T08:00:00Z",
+      "engagement": 110,
+      "authority": 0.84,
+      "sentiment": 0.4,
+      "tags": ["docs", "guardrails", "tracing", "openai-agents"]
+    },
+    {
+      "source": "security",
+      "title": "Agent framework adoption requires tool permission and trace review",
+      "url": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+      "summary": "Risk review highlights prompt injection, unsafe tool use, missing approval gates, and insufficient replay traces as the main production blockers independent of framework choice.",
+      "published_at": "2026-05-27T09:00:00Z",
+      "engagement": 45,
+      "authority": 0.75,
+      "sentiment": -0.22,
+      "tags": ["security", "risk", "tool-permissions", "traceability"]
+    }
+  ]
+}

@@ -22,6 +22,14 @@ The OpenAI-facing metadata lives at:
 agents/openai.yaml
 ```
 
+The installed skill directory is self-contained. It includes:
+
+```text
+skills/aistack-radar/SKILL.md
+skills/aistack-radar/scripts/aistack_radar.py
+skills/aistack-radar/fixtures/demo_signal.json
+```
+
 ## Codex or Claude-Style Usage
 
 Ask the agent to use the skill when the task involves AI, data, or developer-tool stack research:
@@ -34,7 +42,7 @@ The agent should:
 
 - Confirm the research question and decision context.
 - Choose fixture-backed or live collection.
-- Run the CLI.
+- Run the installed skill runtime.
 - Inspect and cite generated artifacts.
 - Avoid unsupported claims.
 
@@ -52,16 +60,24 @@ Use aistack-radar to research current adoption signals for vector database optio
 
 ## CLI Examples
 
-Fixture-backed demo:
+Installed skill fixture-backed demo:
 
 ```bash
-python -m aistack_radar research "LangGraph vs OpenAI Agents SDK" --fixture fixtures/demo_signal.json --output runs/demo --emit html
+SKILL_DIR="${SKILL_DIR:-$HOME/.codex/skills/aistack-radar}"
+python3 "$SKILL_DIR/scripts/aistack_radar.py" research "LangGraph vs OpenAI Agents SDK" --fixture "$SKILL_DIR/fixtures/demo_signal.json" --output runs/demo --emit html
 ```
 
 Live collection shape:
 
 ```bash
-python -m aistack_radar research "LangGraph vs OpenAI Agents SDK" --output runs/langgraph-openai-agents --emit html
+SKILL_DIR="${SKILL_DIR:-$HOME/.codex/skills/aistack-radar}"
+python3 "$SKILL_DIR/scripts/aistack_radar.py" research "LangGraph vs OpenAI Agents SDK" --output runs/langgraph-openai-agents --emit html
+```
+
+Package development equivalent from a full checkout:
+
+```bash
+python3 -m aistack_radar research "LangGraph vs OpenAI Agents SDK" --fixture fixtures/demo_signal.json --output runs/demo --emit html
 ```
 
 Suggested artifact review:
