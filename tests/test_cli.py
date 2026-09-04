@@ -33,7 +33,8 @@ class CliTests(unittest.TestCase):
             self.assertTrue((Path(tmp) / "brief.md").exists())
             self.assertTrue((Path(tmp) / "brief.html").exists())
             data = json.loads((Path(tmp) / "brief.json").read_text(encoding="utf-8"))
-            self.assertIn(data["recommendation"], {"adopt", "trial", "watch", "avoid"})
+            self.assertEqual(data["recommendation"], "trial")
+            self.assertEqual(data["source_runs"][0]["as_of"], "2026-06-09T00:00:00+00:00")
 
     def test_live_defaults_when_no_fixture_or_sources(self):
         with tempfile.TemporaryDirectory() as tmp:

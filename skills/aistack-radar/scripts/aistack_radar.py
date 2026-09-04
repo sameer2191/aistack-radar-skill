@@ -130,6 +130,7 @@ class SourceRun:
     items: tuple[EvidenceItem, ...] = ()
     warnings: tuple[str, ...] = ()
     elapsed_ms: float = 0.0
+    as_of: datetime | None = None
 
 
 @dataclass(frozen=True)
@@ -168,6 +169,7 @@ class RadarBrief:
                     "warnings": list(run.warnings),
                     "elapsed_ms": run.elapsed_ms,
                     "count": len(run.items),
+                    "as_of": run.as_of.isoformat() if run.as_of else None,
                 }
                 for run in self.source_runs
             ],
@@ -269,6 +271,9 @@ def github_item(repo: dict[str, Any]) -> EvidenceItem:
 def load_fixture(path: str | Path) -> SourceRun:
     started = perf_counter()
     payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    as_of = datetime.fromisoformat(payload["as_of"].replace("Z", "+00:00")) if payload.get("as_of") else None
+    if as_of is not None and as_of.tzinfo is None:
+        as_of = as_of.replace(tzinfo=timezone.utc)
     items = []
     for raw in payload.get("items", []):
         items.append(
@@ -286,7 +291,7 @@ def load_fixture(path: str | Path) -> SourceRun:
                 metadata=dict(raw.get("metadata", {})),
             )
         )
-    return SourceRun(source=SourceKind.FIXTURE, items=tuple(items), elapsed_ms=(perf_counter() - started) * 1000)
+    return SourceRun(source=SourceKind.FIXTURE, items=tuple(items), elapsed_ms=(perf_counter() - started) * 1000, as_of=as_of)
 
 
 def user_agent() -> str:
@@ -574,6 +579,9 @@ def score_item(item: EvidenceItem, *, now: datetime | None = None, diversity_bon
 
 
 def score_evidence(runs: tuple[SourceRun, ...], *, now: datetime | None = None) -> tuple[ScoredEvidence, ...]:
+    if now is None and len(runs) == 1 and runs[0].source == SourceKind.FIXTURE:
+        now = runs[0].as_of
+    now = now or datetime.now(timezone.utc)
     items = tuple(item for run in runs for item in run.items)
     counts = Counter(item.source for item in items)
     scored = [score_item(item, now=now, diversity_bonus=0.04 if counts[item.source] <= 2 else 0.0) for item in items]

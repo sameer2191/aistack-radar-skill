@@ -96,6 +96,8 @@ python3 -m aistack_radar research "lancedb" \
 **Offline regression demo.** Use the bundled fixture to verify formatting,
 scoring, and artifact generation without network access.
 
+The bundled fixture pins scoring to its ISO 8601 `as_of` timestamp (2026-06-09 UTC), so evidence ages and recommendations stay stable across runs. `brief.json` records this reference in its source metadata; `generated_at` still records the actual report time. Fixtures without `as_of`, live runs, and mixed fixture/live runs use the current clock.
+
 ```bash
 python3 skills/aistack-radar/scripts/aistack_radar.py research \
   "LangGraph vs OpenAI Agents SDK" \

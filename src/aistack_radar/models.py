@@ -63,6 +63,7 @@ class SourceRun:
     items: tuple[EvidenceItem, ...] = ()
     warnings: tuple[str, ...] = ()
     elapsed_ms: float = 0.0
+    as_of: datetime | None = None
 
 
 @dataclass(frozen=True)
@@ -109,6 +110,7 @@ class RadarBrief:
                     "warnings": list(run.warnings),
                     "elapsed_ms": run.elapsed_ms,
                     "count": len(run.items),
+                    "as_of": run.as_of.isoformat() if run.as_of else None,
                 }
                 for run in self.source_runs
             ],

@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -53,6 +54,22 @@ class SkillRuntimeTests(unittest.TestCase):
             data = json.loads((Path(tmp) / "brief.json").read_text(encoding="utf-8"))
             self.assertEqual(data["topic"], "LangGraph vs OpenAI Agents SDK")
             self.assertGreaterEqual(len(data["evidence"]), 8)
+
+    def test_skill_fixture_clock_and_scores_match_the_package_in_future_years(self):
+        from aistack_radar.connectors.fixture import load_fixture
+        from aistack_radar.synthesis import build_brief
+
+        module = load_skill_runtime()
+        package_brief = build_brief("LangGraph vs OpenAI Agents SDK", (load_fixture(ROOT / "fixtures" / "demo_signal.json"),))
+        skill_run = module.load_fixture(SKILL_DIR / "fixtures" / "demo_signal.json")
+        for year in (2030, 2040):
+            with self.subTest(year=year), patch.object(module, "datetime", wraps=datetime) as clock:
+                clock.now.return_value = datetime(year, 1, 1, tzinfo=timezone.utc)
+                brief = module.build_brief("LangGraph vs OpenAI Agents SDK", (skill_run,))
+            self.assertEqual(brief.recommendation.value, "trial")
+            self.assertEqual(brief.adoption_score, package_brief.adoption_score)
+            self.assertEqual([entry.score for entry in brief.scored_items], [entry.score for entry in package_brief.scored_items])
+            self.assertEqual(brief.to_dict()["source_runs"][0]["as_of"], "2026-06-09T00:00:00+00:00")
 
     def test_skill_fixture_matches_package_fixture(self):
         package_fixture = json.loads((ROOT / "fixtures" / "demo_signal.json").read_text(encoding="utf-8"))
