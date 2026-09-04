@@ -68,6 +68,9 @@ def score_item(item: EvidenceItem, *, now: datetime | None = None, diversity_bon
 
 
 def score_evidence(runs: tuple[SourceRun, ...], *, now: datetime | None = None) -> tuple[ScoredEvidence, ...]:
+    if now is None and len(runs) == 1 and runs[0].source == SourceKind.FIXTURE:
+        now = runs[0].as_of
+    now = now or datetime.now(timezone.utc)
     items = flatten_runs(runs)
     counts = Counter(item.source for item in items)
     scored = []

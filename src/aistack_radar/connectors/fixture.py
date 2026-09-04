@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 from time import perf_counter
 from typing import Any
@@ -37,8 +38,11 @@ def load_fixture(path: str | Path) -> SourceRun:
     started = perf_counter()
     fixture_path = Path(path)
     payload = json.loads(fixture_path.read_text(encoding="utf-8"))
+    as_of = datetime.fromisoformat(payload["as_of"].replace("Z", "+00:00")) if payload.get("as_of") else None
+    if as_of is not None and as_of.tzinfo is None:
+        as_of = as_of.replace(tzinfo=timezone.utc)
     items = tuple(_item(raw) for raw in payload.get("items", []))
     warnings = tuple(str(warning) for warning in payload.get("warnings", []))
     elapsed_ms = (perf_counter() - started) * 1000
-    return SourceRun(source=SourceKind.FIXTURE, items=items, warnings=warnings, elapsed_ms=elapsed_ms)
+    return SourceRun(source=SourceKind.FIXTURE, items=items, warnings=warnings, elapsed_ms=elapsed_ms, as_of=as_of)
 

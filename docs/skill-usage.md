@@ -48,6 +48,8 @@ The agent should:
 
 For deterministic demos or offline checks, ask for fixture mode:
 
+The bundled fixture pins scoring to its ISO 8601 `as_of` timestamp (2026-06-09 UTC), so evidence ages and recommendations stay stable across runs. `brief.json` records this reference in its source metadata; `generated_at` still records the actual report time. Fixtures without `as_of`, live runs, and mixed fixture/live runs use the current clock.
+
 ```text
 Use aistack-radar with the demo fixture and generate an HTML brief.
 ```

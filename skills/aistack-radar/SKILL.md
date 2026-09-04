@@ -83,6 +83,8 @@ Do not claim that a tool is winning, declining, production-ready, deprecated, se
 
 ## Output Contract
 
+The bundled fixture pins scoring to its ISO 8601 `as_of` timestamp (2026-06-09 UTC), so evidence ages and recommendations stay stable across runs. `brief.json` records this reference in its source metadata; `generated_at` still records the actual report time. Fixtures without `as_of`, live runs, and mixed fixture/live runs use the current clock.
+
 - Start with the recommendation and confidence from `brief.json`.
 - Label fixture-backed runs as fixture-backed.
 - For live runs, mention source warnings when any source degrades or times out.
